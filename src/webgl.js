@@ -1,5 +1,8 @@
+/**
+ * @module webgl.js
+ */
 
-import { Vector2, Vector3, Vector4, Matrix2, Matrix3, Matrix4 } from "./math.js";
+import { Mesh } from "./geometry.js";
 
 /**
  * Stores the WebGL context
@@ -89,12 +92,15 @@ class DisplayContext {
     }
 }
 
+/**
+ * Stores a WebGL Program object with extra functionality
+ */
 class Renderer {
 
     /**
      * Create a Renderer instance
      * @param {DisplayContext} displayContext
-     * @param {String} shaderFilename
+     * @param {String} shaderSource
      */
     constructor (displayContext, shaderSource) {
 
@@ -179,7 +185,24 @@ class Renderer {
 
 }
 
-class PixelRenderer {}
+class RenderTexture {
+    constructor (width, height) {
+        this.width = width;
+        this.height = height;
+    }
+}
+
+/**
+ * Stores a renderer made for drawing textures
+ */
+class PixelRenderer extends Renderer {
+    constructor(displayContext, shaderSource, width, height) {
+        super(displayContext, shaderSource);
+
+        this.texture = new RenderTexture(width, height);
+        this.mesh = new Mesh("position", 2);
+    }
+}
 
 export { DisplayContext, Renderer, PixelRenderer };
 

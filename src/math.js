@@ -1,5 +1,10 @@
 
 /**
+ * @module math.js
+ *
+ */
+
+/**
  * Stores a two dimensional vector
  */
 class Vector2 {

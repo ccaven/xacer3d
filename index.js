@@ -7,6 +7,8 @@ import { DisplayContext, Renderer, PixelRenderer } from "./src/webgl.js";
 
 const displayContext = new DisplayContext();
 
-const renderer = new Renderer(displayContext, await fetch("./shaders/terrain.glsl").then(r=>r.text()));
+const renderer = new Renderer(displayContext, await fetch("./shaders/terrain.glsl").then(r => r.text()));
+
+
 
 // console.log(displayContext);
