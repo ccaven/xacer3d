@@ -12,9 +12,10 @@ class DisplayContext {
     /**
      * Create a new DisplayContext instance
      */
-    constructor () {
+    constructor (args) {
         this.width = window.innerWidth;
         this.height = window.innerHeight;
+        this.aspect = this.width / this.height;
 
         /**
          * The canvas
@@ -34,7 +35,7 @@ class DisplayContext {
 
         document.body.append(this.canvas);
 
-        this.gl = this.canvas.getContext("webgl2");
+        this.gl = this.canvas.getContext("webgl2", args);
 
         if (!this.gl) {
             throw new Error("WebGL2 not supported!");
@@ -71,8 +72,8 @@ class DisplayContext {
      * @returns {WebGLProgram}
      */
     createProgram (shaderSource) {
-        const vertexSrc = shaderSource.split("// FRAGMENT SHADER")[0].trim();
-        const fragmentSrc = shaderSource.split("// FRAGMENT SHADER")[1].trim();
+        const vertexSrc = shaderSource.vertex;
+        const fragmentSrc = shaderSource.fragment;
 
         const vertexShader = this.createShader(this.gl.VERTEX_SHADER, vertexSrc);
         const fragmentShader = this.createShader(this.gl.FRAGMENT_SHADER, fragmentSrc);
@@ -100,7 +101,7 @@ class Renderer {
     /**
      * Create a Renderer instance
      * @param {DisplayContext} displayContext
-     * @param {String} shaderSource
+     * @param {Object} shaderSource
      */
     constructor (displayContext, shaderSource) {
 
@@ -108,8 +109,6 @@ class Renderer {
         this.gl = displayContext.gl;
 
         this.program = displayContext.createProgram(shaderSource);
-
-        console.log(this.program);
 
         const numUniforms = this.gl.getProgramParameter(this.program, this.gl.ACTIVE_UNIFORMS);
         const numAttributes = this.gl.getProgramParameter(this.program, this.gl.ACTIVE_ATTRIBUTES);
@@ -145,6 +144,8 @@ class Renderer {
      * @param  {Object} values - The value you want to set
      */
     setUniform (name, value) {
+
+        this.gl.useProgram(this.program);
 
         let location = this.locations[name];
 

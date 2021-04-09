@@ -523,6 +523,10 @@ class Vector4 {
             .addScaled(that.axis[3], this.w);
         return this.setVec(v);
     }
+
+    static fromVector3 (that) {
+        return new Vector4(that.x, that.y, that.z, 1.0);
+    }
 }
 
 /**
@@ -575,6 +579,13 @@ class Matrix2 {
         m.setAxis(0, new Vector2(values[2], values[3]));
         return m;
     }
+
+    toArray () {
+        return new Float32Array([
+            this.axis[0].x, this.axis[1].x,
+            this.axis[0].y, this.axis[1].y
+        ]);
+    }
 }
 
 /**
@@ -601,9 +612,9 @@ class Matrix3 {
      */
     static fromValues (...values) {
         const m = new Matrix3();
-        m.setAxis(0, new Vector3(values[0], values[1], values[2]));
-        m.setAxis(1, new Vector3(values[3], values[4], values[5]));
-        m.setAxis(2, new Vector3(values[6], values[7], values[8]));
+        m.setAxis(0, new Vector3(values[0], values[3], values[6]));
+        m.setAxis(1, new Vector3(values[1], values[4], values[7]));
+        m.setAxis(2, new Vector3(values[2], values[5], values[8]));
         return m;
     }
 
@@ -612,6 +623,14 @@ class Matrix3 {
         this.axis[1].transform(that);
         this.axis[2].transform(that);
     }
+
+    toArray () {
+        return new Float32Array([
+            this.axis[0].x, this.axis[1].x, this.axis[2].x,
+            this.axis[0].y, this.axis[1].y, this.axis[2].y,
+            this.axis[0].z, this.axis[1].z, this.axis[2].z,
+        ]);
+    }
 }
 
 /**
@@ -619,6 +638,9 @@ class Matrix3 {
  */
 class Matrix4 {
     constructor () {
+        /**
+         * @type {Vector4[]}
+         */
         this.axis = [
             new Vector4(1, 0, 0, 0),
             new Vector4(0, 1, 0, 0),
@@ -636,6 +658,49 @@ class Matrix4 {
         this.axis[1].transform(that);
         this.axis[2].transform(that);
         this.axis[3].transform(that);
+    }
+
+    /**
+     * Create a perspective projection matrix
+     * @param {Number} fov
+     * @param {Number} near
+     * @param {Number} far
+     */
+    perspective (fovy, aspect, near, far) {
+        let f = 1.0 / Math.tan(fovy / 2);
+
+        let v10 = far != null && far != Infinity ? (far + near) / (near - far) : -1;
+        let v14 = far != null && far != Infinity ? (2 * far * near) / (near - far) : -2 * near;
+
+        this.axis[0].set(f / aspect, 0, 0, 0);
+        this.axis[1].set(0, f, 0, 0);
+        this.axis[2].set(0, 0, v10, v14);
+        this.axis[3].set(0, 0, 0, 1);
+
+        return this;
+    }
+
+    toArray () {
+        return new Float32Array([
+            this.axis[0].x, this.axis[1].x, this.axis[2].x, this.axis[3].x,
+            this.axis[0].y, this.axis[1].y, this.axis[2].y, this.axis[3].y,
+            this.axis[0].z, this.axis[1].z, this.axis[2].z, this.axis[3].z,
+            this.axis[0].w, this.axis[1].w, this.axis[2].w, this.axis[3].w,
+        ]);
+    }
+
+    /**
+     * Create a matrix4 from a matrix3
+     * @param {Matrix3} that - The 3x3 matrix
+     */
+    static fromMatrix3 (that) {
+        var m = new Matrix4();
+
+        m.axis[0].setVec(Vector4.fromVector3(that.axis[0]));
+        m.axis[1].setVec(Vector4.fromVector3(that.axis[1]));
+        m.axis[2].setVec(Vector4.fromVector3(that.axis[2]));
+
+        return m;
     }
 }
 
