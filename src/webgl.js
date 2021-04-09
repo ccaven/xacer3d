@@ -91,6 +91,27 @@ class DisplayContext {
 
         this.gl.deleteProgram(program);
     }
+
+    /**
+     * Set the render target to the canvas
+     */
+    renderToScreen () {
+        this.gl.bindFramebuffer(this.gl.FRAMEBUFFER, null);
+    }
+
+    /**
+     * Set the background color
+     * @param {Number} r - The red component of the color
+     * @param {Number} g - The green component of the color
+     * @param {Number} b - The blue component of the color
+     */
+    setBackgroundColor (r, g, b) {
+        this.gl.clearColor(r, g, b, 1);
+    }
+
+    clear () {
+        this.gl.clear(this.gl.COLOR_BUFFER_BIT | this.gl.DEPTH_BUFFER_BIT);
+    }
 }
 
 /**
@@ -187,9 +208,45 @@ class Renderer {
 }
 
 class RenderTexture {
-    constructor (width, height) {
+    /**
+     *
+     * @param {DisplayContext} displayContext - The display context
+     * @param {Number} width - The width of the texture
+     * @param {Number} height - The height of the texture
+     */
+    constructor (displayContext, width, height) {
+        this.gl = displayContext.gl;
         this.width = width;
         this.height = height;
+
+        this.framebuffer = this.gl.createFramebuffer();
+
+        this.colorTexture = this.gl.createTexture();
+        this.gl.bindTexture(this.gl.TEXTURE_2D, this.colorTexture);
+        this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_WRAP_S, this.gl.CLAMP_TO_EDGE);
+        this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_WRAP_T, this.gl.CLAMP_TO_EDGE);
+        this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_MIN_FILTER, this.gl.LINEAR);
+        this.gl.texImage2D(this.gl.TEXTURE_2D, 0, this.gl.RGBA, this.width, this.height, 0, this.gl.RGBA, this.gl.UNSIGNED_BYTE, null);
+
+        this.depthTexture = this.gl.createTexture();
+        this.gl.bindTexture(this.gl.TEXTURE_2D, this.depthTexture);
+        this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_WRAP_S, this.gl.CLAMP_TO_EDGE);
+        this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_WRAP_T, this.gl.CLAMP_TO_EDGE);
+        this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_MIN_FILTER, this.gl.LINEAR);
+        this.gl.texImage2D(this.gl.TEXTURE_2D, 0, this.gl.RGBA, this.width, this.height, 0, this.gl.RGBA, this.gl.UNSIGNED_BYTE, null);
+
+        this.gl.bindFramebuffer(this.framebuffer);
+        this.gl.framebufferTexture2D(this.gl.FRAMEBUFFER, this.gl.COLOR_ATTACHMENT0, this.gl.TEXTURE_2D, this.colorTexture, 0);
+        this.gl.framebufferTexture2D(this.gl.FRAMEBUFFER, this.gl.DEPTH_ATTACHMENT, this.gl.TEXTURE_2D, this.depthTexture, 0);
+
+        this.gl.bindFramebuffer(this.gl.FRAMEBUFFER, null);
+    }
+
+    /**
+     * Tell WebGL to render to this texture
+     */
+    setRenderTarget () {
+        this.gl.bindFramebuffer(this.framebuffer);
     }
 }
 
@@ -197,11 +254,32 @@ class RenderTexture {
  * Stores a renderer made for drawing textures
  */
 class PixelRenderer extends Renderer {
-    constructor(displayContext, shaderSource, width, height) {
+    /**
+     * Create a new PixelRenderer object
+     * @param {DisplayContext} displayContext - The display context
+     * @param {Object} shaderSource - An object containing the vertex and fragment shaders
+     * @param {Number} width - The width of the texture
+     * @param {Number} height - The height of the texture
+     */
+    constructor(displayContext, shaderSource, width=displayContext.width, height=displayContext.height) {
         super(displayContext, shaderSource);
 
         this.texture = new RenderTexture(width, height);
-        this.mesh = new Mesh("position", 2);
+        this.mesh = new Mesh(displayContext,
+            { name: "position", size: 2 });
+
+        this.mesh.setData("position", new Float32Array([-1, -1, 1, -1, 1, 1, -1, 1]));
+        this.mesh.setData("triangles", new Uint16Array([0, 1, 2, 0, 2, 3]));
+
+        this.mesh.setBuffers();
+        this.mesh.setAttribPointers(this);
+    }
+
+    /**
+     * Render the PixelRenderer
+     */
+    render () {
+        this.mesh.render(this);
     }
 }
 

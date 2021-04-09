@@ -18,10 +18,10 @@ const mesh = new Mesh(displayContext,
     { name: "normal", size: 3 });
 
 mesh.setData("position", new Float32Array([
-    0, 0, 1,
-    1, 0, 1,
+    -1, -1, 1,
+    1, -1, 1,
     1, 1, 1,
-    0, 1, 1
+    -1, 1, 1
 ]));
 
 mesh.setData("texcoord", new Float32Array([
@@ -49,5 +49,8 @@ renderer.setUniform("u_projection", proj);
 
 mesh.setBuffers();
 mesh.setAttribPointers(renderer);
+
+displayContext.setBackgroundColor(0.0, 0.0, 0.0);
+displayContext.clear();
 
 mesh.render(renderer);
