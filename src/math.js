@@ -637,6 +637,9 @@ class Matrix3 {
  * Stores a 4x4 matrix
  */
 class Matrix4 {
+    /**
+     * Create an identity Matrix4 object
+     */
     constructor () {
         /**
          * @type {Vector4[]}
@@ -652,19 +655,22 @@ class Matrix4 {
     /**
      * Multiply this matrix by another matrix
      * @param {Matrix4} that
+     * @returns {Matrix4} reference to original
      */
     mul (that) {
         this.axis[0].transform(that);
         this.axis[1].transform(that);
         this.axis[2].transform(that);
         this.axis[3].transform(that);
+        return this;
     }
 
     /**
      * Create a perspective projection matrix
-     * @param {Number} fov
-     * @param {Number} near
-     * @param {Number} far
+     * @param {Number} fov - Field of view
+     * @param {Number} near - The near plane
+     * @param {Number} far - The far plane
+     * @returns {Matrix4} reference to original object
      */
     perspective (fovy, aspect, near, far) {
         let f = 1.0 / Math.tan(fovy / 2);
@@ -680,6 +686,10 @@ class Matrix4 {
         return this;
     }
 
+    /**
+     * convert the matrix to an array
+     * @returns {Float32Array} the array of values
+     */
     toArray () {
         return new Float32Array([
             this.axis[0].x, this.axis[1].x, this.axis[2].x, this.axis[3].x,
@@ -687,6 +697,72 @@ class Matrix4 {
             this.axis[0].z, this.axis[1].z, this.axis[2].z, this.axis[3].z,
             this.axis[0].w, this.axis[1].w, this.axis[2].w, this.axis[3].w,
         ]);
+    }
+
+    /**
+     * Translate the 4x4 matrix
+     * @param {Vector3} that - The vector to translate by
+     * @returns {Matrix4} reference to original object
+     */
+    translate (that) {
+        this.axis[3].x += that.x;
+        this.axis[3].y += that.y;
+        this.axis[3].z += that.z;
+        return this;
+    }
+
+    /**
+     * Rotate the matrix around the X axis
+     * @param {Number} theta - The angle to rotate by
+     * @returns {Matrix4} reference to original object
+     */
+    rotateX (theta) {
+        let ct = Math.cos(theta);
+        let st = Math.sin(theta);
+
+        const matrixToRotateBy = new Matrix4();
+        matrixToRotateBy.axis[1].y = ct;
+        matrixToRotateBy.axis[1].z = st;
+        matrixToRotateBy.axis[2].y = -st;
+        matrixToRotateBy.axis[2].z = ct;
+
+        return this.mul(matrixToRotateBy);
+    }
+
+    /**
+     * Rotate the matrix around the Z axis
+     * @param {Number} theta - The angle to rotate by
+     * @returns {Matrix4} reference to original object
+     */
+    rotateZ (theta) {
+        let ct = Math.cos(theta);
+        let st = Math.sin(theta);
+
+        const matrixToRotateBy = new Matrix4();
+        matrixToRotateBy.axis[0].x = ct;
+        matrixToRotateBy.axis[0].y = st;
+        matrixToRotateBy.axis[1].x = -st;
+        matrixToRotateBy.axis[1].y = ct;
+
+        return this.mul(matrixToRotateBy);
+    }
+
+    /**
+     * Set a matrix to the identity matrix
+     * @returns {Matrix4} reference to original object
+     */
+    identity () {
+        this.axis[0].mul(0);
+        this.axis[1].mul(0);
+        this.axis[2].mul(0);
+        this.axis[3].mul(0);
+
+        this.axis[0].x = 1;
+        this.axis[1].y = 1;
+        this.axis[2].z = 1;
+        this.axis[3].w = 1;
+
+        return this;
     }
 
     /**
@@ -704,4 +780,373 @@ class Matrix4 {
     }
 }
 
-export { Vector2, Vector3, Vector4, Matrix2, Matrix3, Matrix4 };
+/**
+ * Stores a rotation in 3D space
+ */
+class Quat {
+
+    /**
+     * Create a new quaternion
+     * @param {Number} r - The real part
+     * @param {Number} i - The first imaginary part
+     * @param {Number} j - The second imaginary part
+     * @param {Number} k - The third imaginary part
+     */
+    constructor (r=0, i=0, j=0, k=1) {
+        this.r = r;
+        this.i = i;
+        this.j = j;
+        this.k = k;
+    }
+
+    /**
+     * Transform a quaternion into a unit quaternion
+     * @returns {Quat} reference to original
+     */
+    identity () {
+        this.r = 0;
+        this.i = 0;
+        this.j = 0;
+        this.k = 1;
+        return this;
+    }
+
+    /**
+     * Set the quaternion to a rotation around an axis
+     * @param {Vector3} axis - The axis to rotate on
+     * @param {Number} angle - How many radians to rotate by
+     * @returns {Quat} reference to original
+     */
+    axisAngle (axis, angle) {
+        angle *= 0.5;
+        let s = Math.sin(angle);
+        this.r = s * axis.x;
+        this.i = s * axis.y;
+        this.j = s * axis.z;
+        this.k = Math.cos(angle);
+        return this;
+    }
+
+    /**
+     * Get the axis of rotation of a quaternion
+     * @returns {Vector3} the axis
+     */
+    getAxis () {
+        let rad = Math.acos(this.k) * 2.0;
+        let s = Math.sin(rad / 2.0);
+        if (s > Number.EPSILON) {
+            return new Vector3(this.r / s, this.i / s, this.j / s);
+        }
+        return new Vector3(1, 0, 0);
+    }
+
+    /**
+     * Calculate the number of radians between two quaternions
+     * @param {Quat} that - The other quaternion
+     * @returns {Number} the number of radians
+     */
+    angleBetween (that) {
+        let dp = this.dot(that);
+        return Math.acos(2.0 * dp * dp - 1);
+    }
+
+    /**
+     * Compute the dot product with another quaternion
+     * @param {Quat} that - The other quaternion
+     * @returns {Number} the dot product
+     */
+    dot (that) {
+        return this.r * that.r + this.i * that.i + this.j * that.j + this.k * that.k;
+    }
+
+    /**
+     * Multiply two quaternions
+     * @param {Quat} that - The other quaternion
+     * @returns {Quat} reference to original
+     */
+    mul (that) {
+        let ax = this.r,
+            ay = this.i,
+            az = this.j,
+            aw = this.k;
+        let bx = that.r,
+            by = that.i,
+            bz = that.j,
+            bw = that.k;
+        this.r = ax * bw + aw * bx + ay * bz - az * by;
+        this.i = ay * bw + aw * by + az * bx - ax * bz;
+        this.j = az * bw + aw * bz + ax * by - ay * bx;
+        this.k = aw * bw - ax * bx - ay * by - az * bz;
+        return this;
+    }
+
+    /**
+     * Rotate the quaternion about the x axis
+     * @param {Number} angle
+     * @returns {Quat} reference to original
+     */
+    rotateX (angle) {
+        angle *= 0.5;
+        let ax = this.r, ay = this.i, az = this.j, aw = this.k;
+        let bx = Math.sin(angle), bw = Math.cos(rad);
+
+        this.r = ax * bw + aw * bx;
+        this.i = ay * bw + az * bx;
+        this.j = az * bw - ay * bx;
+        this.k = aw * bw - ax * bx;
+
+        return this;
+    }
+
+    /**
+     * Rotate the quaternion about the y axis
+     * @param {Number} angle
+     * @returns {Quat} reference to original
+     */
+    rotateY (angle) {
+        angle *= 0.5;
+        let ax = this.r, ay = this.i, az = this.j, aw = this.k;
+        let by = Math.sin(angle), bw = Math.cos(rad);
+
+        this.r = ax * bw - az * by;
+        this.i = ay * bw + aw * by;
+        this.j = az * bw + ax * by;
+        this.k = aw * bw - ay * by;
+
+        return this;
+    }
+
+    /**
+     * Rotate the quaternion about the z axis
+     * @param {Number} angle
+     * @returns {Quat} reference to original
+     */
+    rotateZ (angle) {
+        angle *= 0.5;
+        let ax = this.r, ay = this.i, az = this.j, aw = this.k;
+        let bz = Math.sin(angle), bw = Math.cos(rad);
+
+        this.r = ax * bw + ay * bz;
+        this.i = ay * bw - ax * bz;
+        this.j = az * bw + aw * bz;
+        this.k = aw * bw - az * bz;
+
+        return this;
+    }
+
+    /**
+     * Compute the W component of the quaternion so it is normalized
+     * @returns {Quat} reference to original
+     */
+    calculateW () {
+        let x = this.r, y = this.i, z = this.j;
+        this.w = Math.sqrt(Math.abs(1.0 - x * x - y * y - z * z));
+        return this;
+    }
+
+    /**
+     * Compute the value of e^q
+     * @returns {Quat} reference to original
+     */
+    exp () {
+        let x = this.r,
+            y = this.i,
+            z = this.j,
+            w = this.k;
+        let r = Math.sqrt(x * x + y * y + z * z);
+        let et = Math.exp(w);
+        let s = r > 0 ? (et * Math.sin(r)) / r : 0;
+
+        this.r = x * s;
+        this.i = y * s;
+        this.j = z * s;
+        this.k = et * Math.cos(r);
+        return this;
+    }
+
+    /**
+     * Compute the value of ln(q)
+     * @returns {Quat} reference to original
+     */
+    ln () {
+        let x = this.r,
+            y = this.i,
+            z = this.j,
+            w = this.k;
+        let r = Math.sqrt(x * x + y * y + z * z);
+        let t = r > 0 ? Math.atan2(r, w) / r : 0;
+
+        this.r = x * t;
+        this.i = y * t;
+        this.j = z * t;
+        this.k = 0.5 * Math.log(x * x + y * y + z * z + w * w);
+        return this;
+    }
+
+    /**
+     * Raise the quaternion to a power
+     * @param {Number} b - The power to raise it by
+     * @returns {Quat} reference to original
+     */
+    pow (b) {
+        return this.get().ln().scale(b).exp();
+    }
+
+    /**
+     * Scale the quaternion by a factor
+     * @param {Number} factor - The factor to scale it by
+     * @returns {Quat} reference to original object
+     */
+    scale (factor) {
+        this.r *= factor;
+        this.i *= factor;
+        this.j *= factor;
+        this.k *= factor;
+        return this;
+    }
+
+    /**
+     * Create a clone of the quaternion
+     * @returns {Quat} clone of the object
+     */
+    get () {
+        return new Quat(this.r, this.i, this.j, this.k);
+    }
+
+    /**
+     * Spherically interpolate two quaternions
+     * @param {Quaternion} that - The other quaternion
+     * @param {Number} t - The interpolation factor
+     * @returns {Quat} reference to original
+     */
+    slerp (that, t) {
+        let ax = this.r,
+            ay = this.i,
+            az = this.j,
+            aw = this.k;
+        let bx = that.r,
+            by = that.i,
+            bz = that.j,
+            bw = that.k;
+        let omega, cosom, sinom, scale0, scale1;
+        cosom = ax * bx + ay * by + az * bz + aw * bw;
+        if (cosom < 0.0) {
+            cosom = -cosom;
+            bx = -bx;
+            by = -by;
+            bz = -bz;
+            bw = -bw;
+        }
+        if (1.0 - cosom > Number.EPSILON) {
+            omega = Math.acos(cosom);
+            sinom = Math.sin(omega);
+            scale0 = Math.sin((1.0 - t) * omega) / sinom;
+            scale1 = Math.sin(t * omega) / sinom;
+        } else {
+            scale0 = 1.0 - t;
+            scale1 = t;
+        }
+        return new Quat(scale0 * ax + scale1 * bx, scale0 * ay + scale1 * by, scale0 * az + scale1 * bz, scale0 * aw + scale1 * bw);
+    }
+
+    /**
+     * Generate a random unit quaternion
+     * @returns {Quat} reference to original
+     */
+    random () {
+        let u1 = Math.random();
+        let u2 = Math.random();
+        let u3 = Math.random();
+
+        let sqrt1MinusU1 = Math.sqrt(1 - u1);
+        let sqrtU1 = Math.sqrt(u1);
+        return new Quat(
+            sqrt1MinusU1 * Math.sin(2.0 * Math.PI * u2),
+            sqrt1MinusU1 * Math.cos(2.0 * Math.PI * u2),
+            sqrtU1 * Math.sin(2.0 * Math.PI * u3),
+            sqrtU1 * Math.cos(2.0 * Math.PI * u3));
+    }
+
+    /**
+     * Calculate the inverse of a quaternion
+     * @returns {Quat} reference to original
+     */
+    invert () {
+        let a0 = this.r,
+            a1 = this.i,
+            a2 = this.j,
+            a3 = this.k;
+        let dot = a0 * a0 + a1 * a1 + a2 * a2 + a3 * a3;
+        let invDot = dot ? 1.0 / dot : 0;
+        // TODO: Would be faster to return [0,0,0,0] immediately if dot == 0
+        this.r = -a0 * invDot;
+        this.i = -a1 * invDot;
+        this.j = -a2 * invDot;
+        this.k = a3 * invDot;
+        return this;
+    }
+
+    /**
+     * Calculate the conjugate of a quaternion
+     * @returns {Quat} reference to original
+     */
+    conjugate () {
+        this.r = -this.r;
+        this.i = -this.i;
+        this.j = -this.j;
+        return this;
+    }
+
+    /**
+     * Calculate a quaternion based on euler angles
+     * @param {Vector3} eulerAngles - A vector representing the euler angles
+     * @returns {Quat} reference to original
+     */
+    fromEuler (eulerAngles) {
+        let x = eulerAngles.x,
+            y = eulerAngles.y,
+            z = eulerAngles.z;
+        let halfToRad = (0.5 * Math.PI) / 180.0;
+            x *= halfToRad;
+            y *= halfToRad;
+            z *= halfToRad;
+        let sx = Math.sin(x);
+        let cx = Math.cos(x);
+        let sy = Math.sin(y);
+        let cy = Math.cos(y);
+        let sz = Math.sin(z);
+        let cz = Math.cos(z);
+        this.r = sx * cy * cz - cx * sy * sz;
+        this.i = cx * sy * cz + sx * cy * sz;
+        this.j = cx * cy * sz - sx * sy * cz;
+        this.k = cx * cy * cz + sx * sy * sz;
+        return this;
+    }
+
+    /**
+     * Calculate a quaternion based on euler angles
+     * @param {Number} x - The rotation around the x axis
+     * @param {Number} y - The rotation around the y axis
+     * @param {Number} z - The rotation around the z axis
+     * @returns {Quat} reference to original
+     */
+    fromEuler2 (x, y, z) {
+        let halfToRad = (0.5 * Math.PI) / 180.0;
+            x *= halfToRad;
+            y *= halfToRad;
+            z *= halfToRad;
+        let sx = Math.sin(x);
+        let cx = Math.cos(x);
+        let sy = Math.sin(y);
+        let cy = Math.cos(y);
+        let sz = Math.sin(z);
+        let cz = Math.cos(z);
+        this.r = sx * cy * cz - cx * sy * sz;
+        this.i = cx * sy * cz + sx * cy * sz;
+        this.j = cx * cy * sz - sx * sy * cz;
+        this.k = cx * cy * cz + sx * sy * sz;
+        return this;
+    }
+}
+
+export { Vector2, Vector3, Vector4, Matrix2, Matrix3, Matrix4, Quat };
