@@ -174,18 +174,164 @@ class MeshGenerator {
         for (let index = 0; index < meshes.length; index ++) {
             let meshData = meshes[index];
             this.meshes[meshData.name] = new Mesh(this.displayContext, ...meshData.buffers);
-            console.log(meshData.buffers);
-            console.log(meshData.data);
             for (let i = 0; i < meshData.buffers.length; i ++) {
                 let bufferName = meshData.buffers[i].name;
-                console.log("Set data of buffer " + bufferName + " to " + meshData.data[bufferName]);
                 this.meshes[meshData.name].setData(bufferName, meshData.data[bufferName]);
             }
             this.meshes[meshData.name].setData("triangles", meshData.data.triangles);
             this.meshes[meshData.name].setBuffers();
-
-            console.log(this.meshes[meshData.name]);
         }
+    }
+
+    static getStandard (displayContext) {
+        return new MeshGenerator(displayContext,
+            /* Basic quad */
+            {
+                name: "quad",
+                buffers: [
+                    { name: "position", size: 3},
+                    { name: "texcoord", size: 2},
+                    { name: "normal", size: 3}
+                ],
+                data: {
+                    position: [
+                        new Vector3(-1, -1, 0),
+                        new Vector3(-1, 1, 0),
+                        new Vector3(1, 1, 0),
+                        new Vector3(1, -1, 0)
+                    ],
+                    texcoord: [
+                        new Vector2(0, 0),
+                        new Vector2(1, 0),
+                        new Vector2(1, 1),
+                        new Vector2(0, 1)
+                    ],
+                    normal: [
+                        new Vector3(0, 0, 1),
+                        new Vector3(0, 0, 1),
+                        new Vector3(0, 0, 1),
+                        new Vector3(0, 0, 1),
+                    ],
+                    triangles: [
+                        0, 2, 1,
+                        3, 2, 0
+                    ],
+                },
+            },
+
+            {
+                name: "cube",
+                buffers: [
+                    { name: "position", size: 3},
+                    { name: "texcoord", size: 2},
+                    { name: "normal", size: 3}
+                ],
+                data: {
+                    position: [
+                        new Vector3(-1, -1, 1),
+                        new Vector3(1, -1, 1),
+                        new Vector3(1, 1, 1),
+                        new Vector3(-1, 1, 1),
+
+                        new Vector3(-1, -1, -1),
+                        new Vector3(-1, 1, -1),
+                        new Vector3(1, 1, -1),
+                        new Vector3(1, -1, -1),
+
+                        new Vector3(-1, 1, -1),
+                        new Vector3(-1, 1, 1),
+                        new Vector3(1, 1, 1),
+                        new Vector3(1, 1, -1),
+
+                        new Vector3(-1, -1, -1),
+                        new Vector3(1, -1, -1),
+                        new Vector3(1, -1, 1),
+                        new Vector3(-1, -1, 1),
+
+                        new Vector3(1, -1, -1),
+                        new Vector3(1, 1, -1),
+                        new Vector3(1, 1, 1),
+                        new Vector3(1, -1, 1),
+
+                        new Vector3(-1, -1, -1),
+                        new Vector3(-1, -1, 1),
+                        new Vector3(-1, 1, 1),
+                        new Vector3(-1, 1, -1)
+                    ],
+                    texcoord: [
+                        new Vector2(0, 0),
+                        new Vector2(1, 0),
+                        new Vector2(1, 1),
+                        new Vector2(0, 1),
+
+                        new Vector2(0, 0),
+                        new Vector2(1, 0),
+                        new Vector2(1, 1),
+                        new Vector2(0, 1),
+
+                        new Vector2(0, 0),
+                        new Vector2(1, 0),
+                        new Vector2(1, 1),
+                        new Vector2(0, 1),
+
+                        new Vector2(0, 0),
+                        new Vector2(1, 0),
+                        new Vector2(1, 1),
+                        new Vector2(0, 1),
+
+                        new Vector2(0, 0),
+                        new Vector2(1, 0),
+                        new Vector2(1, 1),
+                        new Vector2(0, 1),
+
+                        new Vector2(0, 0),
+                        new Vector2(1, 0),
+                        new Vector2(1, 1),
+                        new Vector2(0, 1),
+                    ],
+                    normal: [
+                        new Vector3(0, 0, 1),
+                        new Vector3(0, 0, 1),
+                        new Vector3(0, 0, 1),
+                        new Vector3(0, 0, 1),
+
+                        new Vector3(0, 0, -1),
+                        new Vector3(0, 0, -1),
+                        new Vector3(0, 0, -1),
+                        new Vector3(0, 0, -1),
+
+                        new Vector3(0, 1, 0),
+                        new Vector3(0, 1, 0),
+                        new Vector3(0, 1, 0),
+                        new Vector3(0, 1, 0),
+
+                        new Vector3(0, -1, 0),
+                        new Vector3(0, -1, 0),
+                        new Vector3(0, -1, 0),
+                        new Vector3(0, -1, 0),
+
+                        new Vector3(1, 0, 0),
+                        new Vector3(1, 0, 0),
+                        new Vector3(1, 0, 0),
+                        new Vector3(1, 0, 0),
+
+                        new Vector3(-1, 0, 0),
+                        new Vector3(-1, 0, 0),
+                        new Vector3(-1, 0, 0),
+                        new Vector3(-1, 0, 0),
+                    ],
+                    triangles: [
+                        0,  1,  2,      0,  2,  3,
+                        4,  5,  6,      4,  6,  7,
+                        8,  9,  10,     8,  10, 11,
+                        12, 13, 14,     12, 14, 15,
+                        16, 17, 18,     16, 18, 19,
+                        20, 21, 22,     20, 22, 23,
+                    ],
+                },
+            },
+
+        );
     }
 }
 

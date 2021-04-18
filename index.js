@@ -1,6 +1,9 @@
-import { Vector2, Vector3, Vector4, Matrix2, Matrix3, Matrix4 } from "./src/math.js";
-import { Mesh, MeshGenerator } from "./src/geometry.js";
-import { DisplayContext, Renderer, PixelRenderer } from "./src/webgl.js";
+import {
+    Vector2, Vector3, Vector4, Matrix2, Matrix3, Matrix4, Quat,
+    Mesh, MeshGenerator,
+    DisplayContext, Renderer, PixelRenderer,
+    GameObject, Camera
+} from "./src/engine.js";
 
 const displayContext = new DisplayContext({
     preserveDrawingBuffer: true,
@@ -12,54 +15,32 @@ const renderer = new Renderer(displayContext, {
     fragment: await fetch("./shaders/terrain-fragment.glsl").then(r => r.text())
 });
 
-const proj = new Matrix4().perspective(90, displayContext.aspect, 0, 10);
+const cam = new Camera(renderer, new Vector3(0.0, 0, 0), {
+    near: 0.0,
+    far: 20.0,
+    pitch: 0.0,
+    yaw: 0.0
+});
 
-const meshCreator = new MeshGenerator(displayContext,
-    /* Mesh data here */
-    {
-        name: "quad",
-        buffers: [
-            { name: "position", size: 3},
-            { name: "texcoord", size: 2},
-            { name: "normal", size: 3}
-        ],
-        data: {
-            position: [
-                new Vector3(-1, -1, 0),
-                new Vector3(-1, 1, 0),
-                new Vector3(1, 1, 0),
-                new Vector3(1, -1, 0)
-            ],
-            texcoord: [
-                new Vector2(0, 0),
-                new Vector2(1, 0),
-                new Vector2(1, 1),
-                new Vector2(0, 1)
-            ],
-            normal: [
-                new Vector3(0, 0, 1),
-                new Vector3(0, 0, 1),
-                new Vector3(0, 0, 1),
-                new Vector3(0, 0, 1),
-            ],
-            triangles: [
-                0, 1, 2,
-                3, 2, 0
-            ],
-        },
-    },
+const meshCreator = MeshGenerator.getStandard(displayContext);
 
-);
+const gameObject = new GameObject(meshCreator.meshes.quad,
+    new Vector3(0, 0, 0),
+    new Quat(1, 0, 0, 0),
+    new Vector3(1, 1, 1));
 
+displayContext.setBackgroundColor(0.1, 0.1, 0.1);
 
+function render (now) {
 
-const mesh = meshCreator.meshes.quad;
+    cam.setMatrix();
 
-renderer.setUniform("u_projection", proj);
+    displayContext.clear();
 
-displayContext.setBackgroundColor(0.0, 0.0, 0.0);
-displayContext.clear();
+    gameObject.render(renderer);
 
-mesh.setAttribPointers(renderer);
-mesh.render(renderer);
+    requestAnimationFrame(render);
 
+}
+
+requestAnimationFrame(render);

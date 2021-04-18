@@ -44,6 +44,12 @@ class DisplayContext {
         this.gl.viewport(0, 0, this.width, this.height);
         this.gl.clearColor(1.0, 0.5, 0.5, 1.0);
         this.gl.clear(this.gl.COLOR_BUFFER_BIT);
+
+        this.gl.enable(this.gl.DEPTH_TEST);
+        this.gl.depthFunc(this.gl.LEQUAL);
+
+        this.gl.enable(this.gl.CULL_FACE);
+        this.gl.cullFace(this.gl.BACK);
     }
 
     /**
@@ -141,7 +147,7 @@ class Renderer {
         for (let i = 0; i < numUniforms; i ++) {
             const info = this.gl.getActiveUniform(this.program, i);
 
-            console.log(`New uniform ${info.name} with type ${info.type} and size ${info.size}`);
+            //console.log(`New uniform ${info.name} with type ${info.type} and size ${info.size}`);
 
             this.locations[info.name] = this.gl.getUniformLocation(this.program, info.name);
             this.types[info.name] = info.type;
@@ -151,7 +157,7 @@ class Renderer {
         for (let i = 0; i < numAttributes; i ++) {
             const info = this.gl.getActiveAttrib(this.program, i);
 
-            console.log(`New attribute ${info.name} with type ${info.type} and size ${info.size}`);
+            //console.log(`New attribute ${info.name} with type ${info.type} and size ${info.size}`);
 
             this.locations[info.name] = this.gl.getAttribLocation(this.program, info.name);
             this.types[info.name] = info.type;

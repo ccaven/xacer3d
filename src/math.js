@@ -680,8 +680,8 @@ class Matrix4 {
 
         this.axis[0].set(f / aspect, 0, 0, 0);
         this.axis[1].set(0, f, 0, 0);
-        this.axis[2].set(0, 0, v10, v14);
-        this.axis[3].set(0, 0, 0, 1);
+        this.axis[2].set(0, 0, v10, 0);
+        this.axis[3].set(0, 0, v14, 1);
 
         return this;
     }
@@ -734,6 +734,24 @@ class Matrix4 {
      * @param {Number} theta - The angle to rotate by
      * @returns {Matrix4} reference to original object
      */
+    rotateY (theta) {
+        let ct = Math.cos(theta);
+        let st = Math.sin(theta);
+
+        const matrixToRotateBy = new Matrix4();
+        matrixToRotateBy.axis[0].x = ct;
+        matrixToRotateBy.axis[0].y = st;
+        matrixToRotateBy.axis[2].x = -st;
+        matrixToRotateBy.axis[2].y = ct;
+
+        return this.mul(matrixToRotateBy);
+    }
+
+    /**
+     * Rotate the matrix around the Z axis
+     * @param {Number} theta - The angle to rotate by
+     * @returns {Matrix4} reference to original object
+     */
     rotateZ (theta) {
         let ct = Math.cos(theta);
         let st = Math.sin(theta);
@@ -745,6 +763,14 @@ class Matrix4 {
         matrixToRotateBy.axis[1].y = ct;
 
         return this.mul(matrixToRotateBy);
+    }
+
+    /**
+     * Rotate based on a quaternion
+     * @param {Quat} quat - The quaternion based on the rotation
+     */
+    rotateQuat (quat) {
+        return this.mul(quat.toMatrix());
     }
 
     /**
@@ -762,6 +788,18 @@ class Matrix4 {
         this.axis[2].z = 1;
         this.axis[3].w = 1;
 
+        return this;
+    }
+
+    /**
+     * Scale a matrix
+     * @param {Vector3} factor - The amount to scale by
+     * @returns {Matrix4} reference to original
+     */
+    scale (factor) {
+        this.axis[0].x *= factor.x;
+        this.axis[1].y *= factor.y;
+        this.axis[2].z *= factor.z;
         return this;
     }
 
@@ -1146,6 +1184,28 @@ class Quat {
         this.j = cx * cy * sz - sx * sy * cz;
         this.k = cx * cy * cz + sx * sy * sz;
         return this;
+    }
+
+    /**
+     * Convert the quaternion to a matrix
+     * @returns {Matrix4} the rotation matrix
+     */
+    toMatrix () {
+        let m = new Matrix4();
+        let s = 1 / this.dot(this);
+        m.axis[0].x = 1 - 2 * s * (this.j * this.j + this.k * this.k);
+        m.axis[0].y = 2 * s * (this.i * this.j + this.k * this.r);
+        m.axis[0].z = 2 * s * (this.i * this.k - this.j * this.r);
+
+        m.axis[1].x = 2 * s * (this.i * this.j - this.k * this.r);
+        m.axis[1].y = 1 - 2 * s * (this.i * this.i + this.k * this.k);
+        m.axis[1].z = 2 * s * (this.j * this.k + this.i * this.r);
+
+        m.axis[2].x = 2 * s * (this.i * this.k + this.j * this.r);
+        m.axis[2].y = 2 * s * (this.j * this.k - this.i * this.r);
+        m.axis[2].z = 1 - 2 * s * (this.i * this.i + this.j * this.j);
+
+        return m;
     }
 }
 

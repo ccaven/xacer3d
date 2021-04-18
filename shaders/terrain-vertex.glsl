@@ -23,7 +23,7 @@ out vec2 v_texcoord;
 void main () {
 
     // Translate the vertices to a 1 by 1 by 1 box
-    gl_Position = u_projection * u_model * vec4(a_position, 1.0);
+    gl_Position = u_projection * vec4(a_position, 1.0);
 
     // Set the varyings
     v_position = gl_Position;
