@@ -1,5 +1,11 @@
 
+
+import * as vec3 from "./src/gl-matrix/vec3.js";
+import * as vec4 from "./src/gl-matrix/vec4.js";
+import * as mat3 from "./src/gl-matrix/mat3.js";
 import * as mat4 from "./src/gl-matrix/mat4.js";
+import * as quat from "./src/gl-matrix/quat.js";
+
 import { StandardMesh } from "./src/x3d.js";
 import { DisplayContext, Renderer } from "./src/xgl.js";
 
@@ -29,7 +35,7 @@ mesh.data.position = [
     1, -1, 0
 ];
 
-mesh.data.texcoords = [
+mesh.data.texcoord = [
     0, 0,
     0, 1,
     1, 1,
@@ -47,3 +53,5 @@ renderer.setUniform("u_model", mat4.create());
 mesh.setBuffers();
 mesh.setAttibPointers(renderer);
 mesh.render(renderer);
+
+console.log(mesh);

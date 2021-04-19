@@ -3,7 +3,9 @@
  */
 
 /**
+ * @class
  * Stores the WebGL context
+
  */
 export class DisplayContext {
 
@@ -46,8 +48,10 @@ export class DisplayContext {
         this.gl.enable(this.gl.DEPTH_TEST);
         this.gl.depthFunc(this.gl.LEQUAL);
 
+        /*
         this.gl.enable(this.gl.CULL_FACE);
         this.gl.cullFace(this.gl.BACK);
+        */
     }
 
     /**
@@ -119,6 +123,7 @@ export class DisplayContext {
 }
 
 /**
+ * @class
  * Stores a WebGL Program object with extra functionality
  */
 export class Renderer {
