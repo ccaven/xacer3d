@@ -85,8 +85,7 @@ export class StandardMesh {
     /**
      * Create a new Mesh
      * @param {xgl.DisplayContext} context - The display context
-     * @param {String} name - The name of the mesh
-     * @param {*} buffers - The list of buffers the mesh uses
+     * @param {{name: String, size: Number}[]} buffers - The list of buffers the mesh uses
      */
     constructor(context, buffers) {
         this.gl = context.gl;
