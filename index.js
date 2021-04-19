@@ -16,30 +16,22 @@ const displayContext = new DisplayContext({
 });
 
 const renderer = new Renderer(displayContext, {
-    vertex: await fetch("./shaders/standard/standard-vertex.glsl").then(r=>r.text()),
-    fragment: await fetch("./shaders/standard/standard-fragment.glsl").then(r=>r.text())
+    vertex: await fetch("./shaders/postprocessing/pixelshader-vertex.glsl").then(r=>r.text()),
+    fragment: await fetch("./shaders/raytracing/cavan-challenge.glsl").then(r=>r.text())
 });
 
 displayContext.setBackgroundColor(0.4, 0.1, 1.0);
 displayContext.clear();
 
 const mesh = new StandardMesh(displayContext, [
-    { name: "position", size: 3 },
-    { name: "texcoord", size: 2 }
+    { name: "position", size: 2 },
 ]);
 
 mesh.data.position = [
-    -1, -1, 0,
-    -1, 1, 0,
-    1, 1, 0,
-    1, -1, 0
-];
-
-mesh.data.texcoord = [
-    0, 0,
-    0, 1,
+    -1, -1,
+    -1, 1,
     1, 1,
-    1, 0
+    1, -1,
 ];
 
 mesh.data.triangles = [
@@ -47,8 +39,12 @@ mesh.data.triangles = [
     3, 2, 0
 ];
 
-renderer.setUniform("u_projection", mat4.create());
-renderer.setUniform("u_model", mat4.create());
+const camera = vec3.create();
+camera[2] = -5;
+
+renderer.setUniform("u_resolution", [displayContext.width, displayContext.height])
+renderer.setUniform("u_camera", camera);
+renderer.setUniform("u_view", mat3.create())
 
 mesh.setBuffers();
 mesh.setAttibPointers(renderer);
