@@ -1,13 +1,11 @@
 /**
- * @module webgl.js
+ * @module xgl
  */
-
-import { Mesh } from "./geometry.js";
 
 /**
  * Stores the WebGL context
  */
-class DisplayContext {
+export class DisplayContext {
 
     /**
      * Create a new DisplayContext instance
@@ -123,7 +121,7 @@ class DisplayContext {
 /**
  * Stores a WebGL Program object with extra functionality
  */
-class Renderer {
+export class Renderer {
 
     /**
      * Create a Renderer instance
@@ -180,30 +178,36 @@ class Renderer {
 
         let type = this.types[name];
 
-        //let type = this.types[name];
-        switch (value.constructor.name) {
-            case "Number":
-                if (type == this.gl.FLOAT) this.gl.uniform1f(location, value);
-                else if (type == this.gl.INT) this.gl.uniform1i(location, value);
-                else console.error(`Unknown input type: ${value.constructor.name}!`);
+        switch (type) {
+            case this.gl.FLOAT:
+                this.gl.uniform1f(location, value);
                 break;
-            case "Vector2":
-                this.gl.uniform2f(location, value.x, value.y);
+            case this.gl.INT:
+                this.gl.uniform1i(location, value);
                 break;
-            case "Vector3":
-                this.gl.uniform3f(location, value.x, value.y, value.z);
+            case this.gl.FLOAT_VEC2:
+                this.gl.uniform2fv(location, value);
                 break;
-            case "Vector4":
-                this.gl.uniform4f(location, value.x, value.y, value.z, value.w);
+            case this.gl.INT_VEC2:
+                this.gl.uniform2iv(location, value);
                 break;
-            case "Matrix2":
-                this.gl.uniformMatrix2fv(location, false, value.toArray());
+            case this.gl.FLOAT_VEC3:
+                this.gl.uniform3fv(location, value);
                 break;
-            case "Matrix3":
-                this.gl.uniformMatrix3fv(location, false, value.toArray());
+            case this.gl.INT_VEC3:
+                this.gl.uniform3fv(location, value);
                 break;
-            case "Matrix4":
-                this.gl.uniformMatrix4fv(location, false, value.toArray());
+            case this.gl.FLOAT_VEC4:
+                this.gl.uniform4fv(location, value);
+                break;
+            case this.gl.INT_VEC4:
+                this.gl.uniform4fv(location, value);
+                break;
+            case this.gl.FLOAT_MAT3:
+                this.gl.uniformMatrix3fv(location, false, value);
+                break;
+            case this.gl.FLOAT_MAT4:
+                this.gl.uniformMatrix4fv(location, false, value);
                 break;
             default:
                 console.error(`Unknown input type: ${value.constructor.name}!`);
@@ -212,82 +216,3 @@ class Renderer {
     }
 
 }
-
-class RenderTexture {
-    /**
-     *
-     * @param {DisplayContext} displayContext - The display context
-     * @param {Number} width - The width of the texture
-     * @param {Number} height - The height of the texture
-     */
-    constructor (displayContext, width, height) {
-        this.gl = displayContext.gl;
-        this.width = width;
-        this.height = height;
-
-        this.framebuffer = this.gl.createFramebuffer();
-
-        this.colorTexture = this.gl.createTexture();
-        this.gl.bindTexture(this.gl.TEXTURE_2D, this.colorTexture);
-        this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_WRAP_S, this.gl.CLAMP_TO_EDGE);
-        this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_WRAP_T, this.gl.CLAMP_TO_EDGE);
-        this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_MIN_FILTER, this.gl.LINEAR);
-        this.gl.texImage2D(this.gl.TEXTURE_2D, 0, this.gl.RGBA, this.width, this.height, 0, this.gl.RGBA, this.gl.UNSIGNED_BYTE, null);
-
-        this.depthTexture = this.gl.createTexture();
-        this.gl.bindTexture(this.gl.TEXTURE_2D, this.depthTexture);
-        this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_WRAP_S, this.gl.CLAMP_TO_EDGE);
-        this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_WRAP_T, this.gl.CLAMP_TO_EDGE);
-        this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_MIN_FILTER, this.gl.LINEAR);
-        this.gl.texImage2D(this.gl.TEXTURE_2D, 0, this.gl.RGBA, this.width, this.height, 0, this.gl.RGBA, this.gl.UNSIGNED_BYTE, null);
-
-        this.gl.bindFramebuffer(this.framebuffer);
-        this.gl.framebufferTexture2D(this.gl.FRAMEBUFFER, this.gl.COLOR_ATTACHMENT0, this.gl.TEXTURE_2D, this.colorTexture, 0);
-        this.gl.framebufferTexture2D(this.gl.FRAMEBUFFER, this.gl.DEPTH_ATTACHMENT, this.gl.TEXTURE_2D, this.depthTexture, 0);
-
-        this.gl.bindFramebuffer(this.gl.FRAMEBUFFER, null);
-    }
-
-    /**
-     * Tell WebGL to render to this texture
-     */
-    setRenderTarget () {
-        this.gl.bindFramebuffer(this.framebuffer);
-    }
-}
-
-/**
- * Stores a renderer made for drawing textures
- */
-class PixelRenderer extends Renderer {
-    /**
-     * Create a new PixelRenderer object
-     * @param {DisplayContext} displayContext - The display context
-     * @param {Object} shaderSource - An object containing the vertex and fragment shaders
-     * @param {Number} width - The width of the texture
-     * @param {Number} height - The height of the texture
-     */
-    constructor(displayContext, shaderSource, width=displayContext.width, height=displayContext.height) {
-        super(displayContext, shaderSource);
-
-        this.texture = new RenderTexture(width, height);
-        this.mesh = new Mesh(displayContext,
-            { name: "position", size: 2 });
-
-        this.mesh.setData("position", new Float32Array([-1, -1, 1, -1, 1, 1, -1, 1]));
-        this.mesh.setData("triangles", new Uint16Array([0, 1, 2, 0, 2, 3]));
-
-        this.mesh.setBuffers();
-        this.mesh.setAttribPointers(this);
-    }
-
-    /**
-     * Render the PixelRenderer
-     */
-    render () {
-        this.mesh.render(this);
-    }
-}
-
-export { DisplayContext, Renderer, PixelRenderer };
-
