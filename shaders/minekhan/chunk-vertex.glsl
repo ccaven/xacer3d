@@ -12,7 +12,7 @@ uniform mat4 u_model;
 out vec4 v_position;
 out vec2 v_texcoord;
 out vec3 v_normal;
-out vec3 v_shadow;
+out float v_shadow;
 
 void main () {
     gl_Position = u_projection * u_model * vec4(a_position, 1);

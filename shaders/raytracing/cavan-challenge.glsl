@@ -19,16 +19,39 @@ struct SignedDistance {
     vec3 color;
 };
 
+void addCircle (inout float t, vec2 p, vec2 center, float radius) {
+    t = min(t, length(p - center) - radius);
+}
+
+void addBox (inout float t, vec2 p, vec2 c, vec2 b, vec4 r) {
+    p -= c;
+    r.xy = (p.x>0.0)?r.xy : r.zw;
+    r.x  = (p.y>0.0)?r.x  : r.y;
+    vec2 q = abs(p)-b+r.x;
+    t = min(t,min(max(q.x,q.y),0.0) + length(max(q,0.0)) - r.x);
+}
+
 SignedDistance SDF2D (vec2 p) {
-    float t = sqrt(p.x * p.x + p.y * p.y) - 1.0;
 
-    p -= 2.0;
+    float t = 9999.0;
 
-    t = min(t, sqrt(p.x * p.x + p.y * p.y) - 0.1);
+    addCircle(t, p, vec2(5, 1), 1.0);
 
-    p += vec2(1.0, 5.0);
+    addCircle(t, p, vec2(3, 0), 0.5);
 
-    t = min(t, sqrt(p.x * p.x + p.y * p.y) - 0.5);
+    addCircle(t, p, vec2(8, -2), 0.2);
+
+    addCircle(t, p, vec2(1, -3), 0.1);
+
+    addCircle(t, p, vec2(5, -9), 1.0);
+
+    addCircle(t, p, vec2(3, -10), 0.5);
+
+    addCircle(t, p, vec2(8, -12), 0.2);
+
+    addCircle(t, p, vec2(1, -13), 0.1);
+
+    addBox(t, p, vec2(5, -7), vec2(0.1, 1), vec4(0, 0, 0, 0));
 
     vec3 col = vec3(p.x * 0.5, p.y * 0.5, 0.5);
 
