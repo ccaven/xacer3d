@@ -11,7 +11,8 @@
  *  movementX: Number,
  *  movementY: Number,
  *  mousePressed: Boolean,
- *  keys: {key: Boolean}
+ *  keys: {key: Boolean},
+ *  tick: Function
  * }}
  */
 export function getInputObject () {

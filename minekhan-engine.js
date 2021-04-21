@@ -46,6 +46,13 @@ import {
     PhysicsObject
 } from "./src/physics.js";
 
+/**
+ * Import the time class
+ */
+import {
+    Time
+} from "./src/time.js";
+
 
 /**
  * Create the display context
@@ -69,6 +76,11 @@ export const chunkRenderer = new Renderer(displayContext, {
  * Initialize the input object
  */
 export const input = getInputObject();
+
+/**
+ * Initialize the time object
+ */
+export const time = new Time();
 
 /**
  * The block data object represents the attributes of each block
@@ -183,12 +195,32 @@ export class World {
     }
 
     /**
+     * Determines what block goes where
+     * @param {Number} x - The x coordinate of the block
+     * @param {Number} y - The y coordinate of the block
+     * @param {Number} z - The z coordinate of the block
+     */
+    mapDefinition (x, y, z) {
+
+        let height = this.noiseGenerator.noise2D(x / 20, z / 20) * CHUNK_HEIGHT / 2 + CHUNK_HEIGHT / 2 | 0;
+
+        // Underground
+        if (y < height) {
+            return 1;
+        }
+
+        // Overground
+        return 0;
+
+    }
+
+    /**
      * Add a chunk to the loading queue
      * @param {Number} x
      * @param {Number} z
      */
     addChunk(x, z) {
-        this.chunks.push(new ChunkObject([x, z]));
+        this.chunks.push(new ChunkObject([x, z], this));
         this.chunkReference[x + "," + z] = this.chunks.length - 1;
     }
 
@@ -196,6 +228,7 @@ export class World {
      * Retrieve a chunk object
      * @param {Number} x - The x index of the chunk
      * @param {Number} z - The z index of the chunk
+     * @returns {ChunkObject} The chunk at the position
      */
     getChunk(x, z) {
         let key = x + "," + z;
@@ -206,16 +239,44 @@ export class World {
     }
 
     /**
+     * Determine if a chunk exists in the world
+     * @param {Number} x
+     * @param {Number} z
+     * @returns {Boolean} if the chunk exists or not
+     */
+    chunkExists(x, z) {
+        let key = x + "," + z;
+        return this.chunkReference.hasOwnProperty(key);
+    }
+
+    /**
      * Get the voxel value in global coordinates
      * @param {Number} gx - The global x coordinate
      * @param {Number} gy - The global y coordinate
      * @param {Number} gz - The global z coordinate
+     * @returns {Number} The value of the voxel
      */
     getVoxel(gx, gy, gz) {
         let chunkX = Math.floor(gx / CHUNK_WIDTH);
         let chunkZ = Math.floor(gz / CHUNK_WIDTH);
         let chunk = this.getChunk(chunkX, chunkZ);
         if (chunk) return chunk.getVoxel(gx - chunkX * CHUNK_WIDTH, gy, gz - chunkZ * CHUNK_WIDTH);
+    }
+
+    /**
+     * Load the chunks around the player.
+     * This function only adds chunks to the load queue
+     * @param {Player} player - The player object
+     */
+    loadChunksAroundPlayer (player) {
+        let cx = Math.floor(player.transform.position[0] / CHUNK_WIDTH);
+        let cz = Math.floor(player.transform.position[2] / CHUNK_WIDTH);
+        for (let dx = -5; dx <= 5; dx ++) {
+            for (let dz = -5; dz <= 5; dz ++) {
+                if (!this.chunkExists(cx + dx, cz + dz)) this.addChunk(cx + dx, cz + dz);
+            }
+        }
+
     }
 }
 
@@ -229,9 +290,10 @@ export class World {
 export class ChunkObject extends GameObject {
     /**
      * Create a new Chunk object
-     * @param {vec2} position
+     * @param {vec2} position - The normalized position [x, z] of the Chunk
+     * @param {World} parent - The World object the chunk is part of
      */
-    constructor(position) {
+    constructor(position, parent) {
         const mesh = new StandardMesh(displayContext, [
             { name: "position", size: 3 },
             { name: "texcoord", size: 2 },
@@ -244,6 +306,8 @@ export class ChunkObject extends GameObject {
             vec3.create());
 
         super(chunkRenderer, mesh, transform);
+
+        this.parent = parent;
 
         this.transform.position[0] = position[0] * CHUNK_WIDTH;
         this.transform.position[1] = -CHUNK_HEIGHT;
@@ -277,16 +341,15 @@ export class ChunkObject extends GameObject {
 
     /**
      * Generate the voxel array given a map definition function
-     * @param {(position: vec3) => Number} mapDefinition - Defines the value of a voxel given a position
      */
-    fillVoxels(mapDefinition) {
+    fillVoxels() {
         for (let x = 0; x < CHUNK_WIDTH; x++) {
             for (let y = 0; y < CHUNK_HEIGHT; y++) {
                 for (let z = 0; z < CHUNK_WIDTH; z++) {
                     let gx = x + this.transform.position[0];
                     let gy = y + this.transform.position[1];
                     let gz = z + this.transform.position[2];
-                    this.setVoxel(x, y, z, mapDefinition([gx, gy, gz]));
+                    this.setVoxel(x, y, z, this.parent.mapDefinition([gx, gy, gz]));
                 }
             }
         }
@@ -307,76 +370,73 @@ export class ChunkObject extends GameObject {
 
             let curTri = this.mesh.data.position.length / 3;
 
-            for (let j = 0; j < 4; j++) {
+            // Check if the neighboring block is transparent
+            let checkDir = [0, 0, 0];
+            checkDir[axis] = side * 2 - 1;
+
+            let globalCheckX = this.transform.position[0] + x + checkDir[0];
+            let globalCheckY = this.transform.position[1] + y + checkDir[1];
+            let globalCheckZ = this.transform.position[2] + z + checkDir[2];
+
+            let voxel = world.getVoxel(globalCheckX, globalCheckY, globalCheckZ);
+
+            if (!voxel || voxel.transparent) {
+                let newPositions = [
+                    x, y, z,
+                    x, y, z,
+                    x, y, z,
+                    x, y, z,
+                ];
+
+                // Set side that is constant
+                newPositions[0 + axis] = side;
+                newPositions[3 + axis] = side;
+                newPositions[6 + axis] = side;
+                newPositions[9 + axis] = side;
+
+                newPositions[0 + (axis + 1) % 3] += 0;
+                newPositions[0 + (axis + 2) % 3] += 0;
+
+                newPositions[3 + (axis + 1) % 3] += 1;
+                newPositions[3 + (axis + 2) % 3] += 0;
+
+                newPositions[6 + (axis + 1) % 3] += 1;
+                newPositions[6 + (axis + 2) % 3] += 1;
+
+                newPositions[9 + (axis + 1) % 3] += 0;
+                newPositions[9 + (axis + 2) % 3] += 1;
 
 
-                let checkDir = [0, 0, 0];
-                checkDir[axis] = side * 2 - 1;
+                // TODO: Get texcoords on texture alias that go with the block
+                let newTexcoords = [
+                    0, 0,
+                    0, 1,
+                    1, 1,
+                    1, 0,
+                ];
 
-                let globalCheckX = this.transform.position[0] + x + checkDir[0];
-                let globalCheckY = this.transform.position[1] + y + checkDir[1];
-                let globalCheckZ = this.transform.position[2] + z + checkDir[2];
+                // TODO: Set proper winding order
+                let newTris = [
+                    curTri + 0, curTri + 1, curTri + 2,
+                    curTri + 3, curTri + 2, curTri + 0
+                ];
 
-                let voxel = world.getVoxel(globalCheckX, globalCheckY, globalCheckZ);
+                let newNormals = [
+                    0, 0, 0,
+                    0, 0, 0,
+                    0, 0, 0,
+                    0, 0, 0,
+                ];
 
-                if (!voxel || voxel.transparent) {
-                    let newPositions = [
-                        x, y, z,
-                        x, y, z,
-                        x, y, z,
-                        x, y, z,
-                    ];
+                newNormals[0 + axis] = side * 2 - 1;
+                newNormals[3 + axis] = side * 2 - 1;
+                newNormals[6 + axis] = side * 2 - 1;
+                newNormals[9 + axis] = side * 2 - 1;
 
-                    // Set side that is constant
-                    newPositions[0 + axis] = side;
-                    newPositions[3 + axis] = side;
-                    newPositions[6 + axis] = side;
-                    newPositions[9 + axis] = side;
-
-                    newPositions[0 + (axis + 1) % 3] += 0;
-                    newPositions[0 + (axis + 2) % 3] += 0;
-
-                    newPositions[3 + (axis + 1) % 3] += 1;
-                    newPositions[3 + (axis + 2) % 3] += 0;
-
-                    newPositions[6 + (axis + 1) % 3] += 1;
-                    newPositions[6 + (axis + 2) % 3] += 1;
-
-                    newPositions[9 + (axis + 1) % 3] += 0;
-                    newPositions[9 + (axis + 2) % 3] += 1;
-
-
-                    // TODO: Get texcoords on texture alias that go with the block
-                    let newTexcoords = [
-                        0, 0,
-                        0, 1,
-                        1, 1,
-                        1, 0,
-                    ];
-
-                    // TODO: Set proper winding order
-                    let newTris = [
-                        curTri + 0, curTri + 1, curTri + 2,
-                        curTri + 3, curTri + 2, curTri + 0
-                    ];
-
-                    let newNormals = [
-                        0, 0, 0,
-                        0, 0, 0,
-                        0, 0, 0,
-                        0, 0, 0,
-                    ];
-
-                    newNormals[0 + axis] = side * 2 - 1;
-                    newNormals[3 + axis] = side * 2 - 1;
-                    newNormals[6 + axis] = side * 2 - 1;
-                    newNormals[9 + axis] = side * 2 - 1;
-
-                    this.mesh.data.position = this.mesh.data.position.concat(newPositions);
-                    this.mesh.data.texcoord = this.mesh.data.texcoord.concat(newTexcoords);
-                    this.mesh.data.normal = this.mesh.data.normal.concat(newNormals);
-                    this.mesh.data.triangles = this.mesh.data.triangles.concat(newTris);
-                }
+                this.mesh.data.position = this.mesh.data.position.concat(newPositions);
+                this.mesh.data.texcoord = this.mesh.data.texcoord.concat(newTexcoords);
+                this.mesh.data.normal = this.mesh.data.normal.concat(newNormals);
+                this.mesh.data.triangles = this.mesh.data.triangles.concat(newTris);
 
             }
 
