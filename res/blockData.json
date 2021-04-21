@@ -1,0 +1,13 @@
+{
+    "air": {
+        "id": 0,
+        "transparent": true
+    },
+    "dirt": {
+        "id": 1
+    },
+    "grass": {
+        "id": 2,
+        "threeSides": true
+    }
+}

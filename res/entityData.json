@@ -1,0 +1,50 @@
+{
+    "player": {
+        "health": 10,
+        "id": 0,
+        "state": "peaceful"
+    },
+
+
+    "chicken": {
+        "health": 2,
+        "id": 1,
+        "state": "peaceful"
+    },
+    "pig": {
+        "health": 2,
+        "id": 2,
+        "state": "peaceful"
+    },
+    "cow": {
+        "health": 3,
+        "id": 3,
+        "state": "peaceful"
+    },
+
+
+    "zombie": {
+        "health": 5,
+        "id": 16,
+        "state": "hostile",
+        "nighttime": true
+    },
+    "creeper": {
+        "health": 5,
+        "id": 17,
+        "state": "hostile",
+        "nighttime": false
+    },
+    "skeleton": {
+        "health": 5,
+        "id": 18,
+        "state": "hostile",
+        "nighttime": true
+    },
+    "spider": {
+        "health": 5,
+        "id": 19,
+        "state": "hostile",
+        "nighttime": false
+    }
+}

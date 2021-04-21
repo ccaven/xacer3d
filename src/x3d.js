@@ -45,15 +45,16 @@ export class Transform {
 export class Camera {
     /**
      * Create a new Camera element
-     * @param {xgl.Renderer} renderer - The renderer the camera is attached to
+     * @param {xgl.DisplayContext} displayContext - The WebGL instance wrapper
      */
-    constructor (renderer) {
+    constructor (displayContext) {
         this.transform = new Transform();
 
-        this.renderer = renderer;
-        this.parent = this.renderer.context;
+        this.renderer = null;
 
+        this.parent = displayContext;
         this.aspect = this.parent.aspect;
+
         this.fovy = Math.PI / 2;
         this.near = 0.1;
         this.far = 100.0;
@@ -72,7 +73,17 @@ export class Camera {
         mat4.rotate(this.projection, this.projection, this.pitch, [1, 0, 0]);
         mat4.rotate(this.projection, this.projection, this.yaw, [0, 1, 0]);
         mat4.translate(this.projection, this.projection, this.transform.position);
-        this.renderer.setUniform("u_projection", this.projection);
+
+        if (this.renderer) this.renderer.setUniform("u_projection", this.projection);
+    }
+
+    /**
+     * Set which renderer the camera uses
+     * @param {xgl.Renderer} renderer - The new renderer to use
+     */
+    setRenderer (renderer) {
+        if (!renderer.gl) console.error("Invalid renderer!");
+        this.renderer = renderer;
     }
 }
 
