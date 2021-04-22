@@ -59,6 +59,10 @@ player.camera.setRenderer(renderer);
 
 function render () {
 
+
+    engine.input.lockmouse();
+
+
     let t = engine.time.currentTime;
 
     let r = Math.cos(t * 0.001) * 0.5 + 0.5;
@@ -69,10 +73,6 @@ function render () {
     engine.displayContext.clear();
 
     engine.time.update();
-    engine.input.tick();
-
-    // player.transform.position[0] = Math.cos(t * 0.001);
-    // player.camera.pitch = Math.sin(t * 0.002) * 0.1;
 
     player.controls();
 
@@ -81,7 +81,10 @@ function render () {
 
     player.camera.generateProjection();
 
+    player.integrate(engine.time.deltaTime);
+
     mesh.render(renderer);
+    engine.input.tick();
 
     requestAnimationFrame(render);
 }

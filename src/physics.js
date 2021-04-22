@@ -54,6 +54,16 @@ export class PhysicsObject {
         this.acceleration[1] = 0;
         this.acceleration[2] = 0;
     }
+
+    /**
+     * Apply a force to the physics object
+     * @param {vec3} force - The force to apply
+     */
+    applyForce (force) {
+        this.acceleration[0] += force[0] / this.mass;
+        this.acceleration[1] += force[1] / this.mass;
+        this.acceleration[2] += force[2] / this.mass;
+    }
 }
 
 

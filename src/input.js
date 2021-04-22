@@ -11,7 +11,8 @@
  *  movementX: Number,
  *  movementY: Number,
  *  mousePressed: Boolean,
- *  keys: {key: Boolean},
+ *  keys: {},
+ *  lockmouse: Function
  *  tick: Function
  * }}
  */
@@ -45,11 +46,15 @@ export function getInputObject () {
     };
 
     document.onkeydown = function (e) {
-        obj.keys[e.key] = true;
+        obj.keys[e.key.toString()] = true;
     };
 
     document.onkeyup = function (e) {
-        obj.keys[e.key] = false;
+        obj.keys[e.key.toString()] = false;
+    };
+
+    obj.lockmouse = function () {
+        document.getElementsByTagName("canvas")[0].requestPointerLock();
     };
 
     obj.tick = function () {

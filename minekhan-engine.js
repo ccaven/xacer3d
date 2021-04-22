@@ -147,8 +147,8 @@ export class Player extends Entity {
     controls() {
         let movementSpeed = 0.1;
 
-        let forwardX = Math.sin(this.camera.yaw);
-        let forwardZ = Math.cos(this.camera.pitch);
+        let forwardX = Math.sin(-this.camera.yaw);
+        let forwardZ = Math.cos(-this.camera.yaw);
 
         if (input.keys.w) {
             this.velocity[0] += forwardX * movementSpeed;
@@ -169,6 +169,11 @@ export class Player extends Entity {
             this.velocity[0] -= forwardZ * movementSpeed;
             this.velocity[2] += forwardX * movementSpeed;
         }
+
+        this.velocity[0] *= 0.99;
+        this.velocity[2] *= 0.99;
+
+        this.camera.transform = this.transform;
     }
 }
 
